@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/query-core';
-import * as TE from 'fp-ts/TaskEither';
-import { pipe } from 'fp-ts/function';
+import * as TE from 'fp-ts/lib/TaskEither.js';
+import { pipe } from 'fp-ts/lib/function.js';
 import { AlpacaConfig, fetchBtcPrice } from './alpaca.js';
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
@@ -25,7 +25,12 @@ export const getCachedBtcPrice = (
         queryFn: () =>
           pipe(
             fetchBtcPrice(config),
-            TE.getOrElse((error) => Promise.reject(error))
+            TE.match(
+              (error) => {
+                throw error;
+              },
+              (price) => price
+            )
           )()
       }),
     (error) => (error instanceof Error ? error : new Error(String(error)))

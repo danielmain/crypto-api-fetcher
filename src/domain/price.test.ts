@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as E from 'fp-ts/Either';
+import * as E from 'fp-ts/lib/Either.js';
 import { parseBtcPrice } from './price.js';
 
 describe('parseBtcPrice', () => {

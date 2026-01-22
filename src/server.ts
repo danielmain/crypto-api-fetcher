@@ -1,6 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http';
-import * as TE from 'fp-ts/TaskEither';
-import { pipe } from 'fp-ts/function';
+import * as TE from 'fp-ts/lib/TaskEither.js';
+import { pipe } from 'fp-ts/lib/function.js';
 import { AlpacaConfig } from './alpaca.js';
 import { getCachedBtcPrice } from './price-cache.js';
 

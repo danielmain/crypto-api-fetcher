@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import * as E from 'fp-ts/Either';
+import * as E from 'fp-ts/lib/Either.js';
 import { loadEnv } from '../env.js';
 import { fetchBtcPrice, toAlpacaConfig } from '../alpaca.js';
 import { createServer } from '../server.js';

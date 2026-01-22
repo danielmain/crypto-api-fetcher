@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { loadEnv } from './env.js';
 import { createServer } from './server.js';
 import { toAlpacaConfig } from './alpaca.js';
-import * as E from 'fp-ts/Either';
+import * as E from 'fp-ts/lib/Either.js';
 
 const start = () => {
   const envResult = loadEnv();
