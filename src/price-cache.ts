@@ -1,37 +1,79 @@
 import { QueryClient } from '@tanstack/query-core';
 import * as TE from 'fp-ts/lib/TaskEither.js';
 import { pipe } from 'fp-ts/lib/function.js';
-import { AlpacaConfig, fetchBtcPrice } from './alpaca.js';
+import { FreeCryptoConfig, fetchAssetPrice, fetchCryptoList } from './freecrypto.js';
+import { AssetSymbol } from './domain/price.js';
 
-const CACHE_TTL_MS = 15 * 60 * 1000;
+export type PriceCache = {
+  getCachedAssetPrice: (
+    config: FreeCryptoConfig,
+    symbol: AssetSymbol
+  ) => TE.TaskEither<Error, number>;
+};
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: CACHE_TTL_MS,
-      gcTime: CACHE_TTL_MS,
-      retry: false
+export type CryptoListCache = {
+  getCachedCryptoList: (
+    config: FreeCryptoConfig
+  ) => TE.TaskEither<Error, unknown>;
+};
+
+const createQueryClient = (ttlMs: number): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: ttlMs,
+        gcTime: ttlMs,
+        retry: false
+      }
     }
-  }
-});
+  });
 
-export const getCachedBtcPrice = (
-  config: AlpacaConfig
-): TE.TaskEither<Error, number> =>
-  TE.tryCatch(
-    () =>
-      queryClient.fetchQuery({
-        queryKey: ['btc-price'],
-        queryFn: () =>
-          pipe(
-            fetchBtcPrice(config),
-            TE.match(
-              (error) => {
-                throw error;
-              },
-              (price) => price
-            )
-          )()
-      }),
-    (error) => (error instanceof Error ? error : new Error(String(error)))
-  );
+export const createPriceCache = (ttlMs: number): PriceCache => {
+  const queryClient = createQueryClient(ttlMs);
+
+  return {
+    getCachedAssetPrice: (config, symbol) =>
+      TE.tryCatch(
+        () =>
+          queryClient.fetchQuery({
+            queryKey: ['asset-price', symbol.requestSymbol],
+            queryFn: () =>
+              pipe(
+                fetchAssetPrice(config, symbol),
+                TE.match(
+                  (error) => {
+                    throw error;
+                  },
+                  (price) => price
+                )
+              )()
+          }),
+        (error) => (error instanceof Error ? error : new Error(String(error)))
+      )
+  };
+};
+
+export const createCryptoListCache = (ttlMs: number): CryptoListCache => {
+  const queryClient = createQueryClient(ttlMs);
+
+  return {
+    getCachedCryptoList: (config) =>
+      TE.tryCatch(
+        () =>
+          queryClient.fetchQuery({
+            queryKey: ['crypto-list'],
+            queryFn: () =>
+              pipe(
+                fetchCryptoList(config),
+                TE.match(
+                  (error) => {
+                    throw error;
+                  },
+                  (payload) => payload
+                )
+              )()
+          }),
+        (error) => (error instanceof Error ? error : new Error(String(error)))
+      )
+  };
+};

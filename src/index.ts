@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { loadEnv } from './env.js';
 import { createServer } from './server.js';
-import { toAlpacaConfig } from './alpaca.js';
+import { toFreeCryptoConfig } from './freecrypto.js';
 import * as E from 'fp-ts/lib/Either.js';
+import { createCryptoListCache, createPriceCache } from './price-cache.js';
 
 const start = () => {
   const envResult = loadEnv();
@@ -13,7 +14,15 @@ const start = () => {
   }
 
   const env = envResult.right;
-  const server = createServer(toAlpacaConfig(env));
+  const priceCache = createPriceCache(env.priceCacheTtlMinutes * 60 * 1000);
+  const cryptoListCache = createCryptoListCache(
+    env.cryptoListCacheTtlMinutes * 60 * 1000
+  );
+  const server = createServer(
+    toFreeCryptoConfig(env),
+    priceCache,
+    cryptoListCache
+  );
 
   server.listen(env.port, () => {
     console.log(`Listening on http://localhost:${env.port}`);

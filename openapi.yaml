@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: Crypto API Fetcher
+  version: 1.0.0
+  description: |
+    Minimal service that fetches the latest crypto prices from FreeCryptoAPI and
+    serves them via cached REST endpoints.
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Prices
+  - name: Assets
+paths:
+  /api/price/{symbol}:
+    get:
+      tags:
+        - Prices
+      summary: Get latest price for a crypto asset
+      description: |
+        Returns the latest USD price for a single asset symbol. Responses are
+        cached based on server configuration.
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          description: Uppercase alphanumeric asset symbol (e.g., BTC, ETH, ADA).
+          schema:
+            type: string
+            pattern: "^[A-Z0-9]{1,10}$"
+      responses:
+        "200":
+          description: Latest price for the requested symbol.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceResponse"
+              examples:
+                btc:
+                  summary: BTC price
+                  value:
+                    symbol: BTC
+                    price: 43000.12
+        "400":
+          description: Invalid or missing symbol.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "405":
+          description: Method not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream FreeCryptoAPI error or unparseable payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/assets:
+    get:
+      tags:
+        - Assets
+      summary: Get crypto asset list
+      description: |
+        Returns the upstream FreeCryptoAPI crypto list payload as-is. Responses
+        are cached based on server configuration.
+      responses:
+        "200":
+          description: Upstream crypto list payload.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CryptoListResponse"
+        "405":
+          description: Method not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream FreeCryptoAPI error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    PriceResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - symbol
+        - price
+      properties:
+        symbol:
+          type: string
+          description: Asset symbol requested.
+          example: BTC
+        price:
+          type: number
+          description: Latest USD price.
+          example: 43000.12
+    CryptoListResponse:
+      type: object
+      description: FreeCryptoAPI crypto list payload.
+      additionalProperties: false
+      required:
+        - status
+        - resultset_size
+        - result
+      properties:
+        status:
+          type: boolean
+          description: Indicates whether the request succeeded.
+          example: true
+        resultset_size:
+          type: integer
+          description: Total number of assets returned.
+          example: 4483
+        result:
+          type: array
+          description: List of assets.
+          items:
+            $ref: "#/components/schemas/CryptoAsset"
+      example:
+        status: true
+        resultset_size: 4483
+        result:
+          - id: "1"
+            symbol: "BTC"
+            name: "Bitcoin "
+            source: "binance"
+            ohlc_available_from: "2023-01-25"
+            history_available_from: "2016-12-17"
+          - id: "2"
+            symbol: "ETH"
+            name: "Ethereum "
+            source: "binance"
+            ohlc_available_from: "2023-01-25"
+            history_available_from: "2016-12-18"
+          - id: "3"
+            symbol: "LTC"
+            name: "Litecoin "
+            source: "binance"
+            ohlc_available_from: "2023-01-25"
+            history_available_from: "2016-12-18"
+          - id: "4"
+            symbol: "BNB"
+            name: "Binance Coin "
+            source: "binance"
+            ohlc_available_from: "2023-01-25"
+            history_available_from: "2016-12-17"
+          - id: "5"
+            symbol: "NEO"
+            name: "NEO "
+            source: "binance"
+            ohlc_available_from: "2023-01-25"
+            history_available_from: "2016-12-18"
+          - id: "7"
+            symbol: "GAS"
+            name: "Gas "
+            source: "binance"
+            ohlc_available_from: "2023-03-17"
+            history_available_from: "2016-12-17"
+    CryptoAsset:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - symbol
+        - name
+        - source
+        - ohlc_available_from
+        - history_available_from
+      properties:
+        id:
+          type: string
+          description: Asset identifier from FreeCryptoAPI.
+          example: "1"
+        symbol:
+          type: string
+          description: Asset symbol.
+          example: BTC
+        name:
+          type: string
+          description: Asset name.
+          example: "Bitcoin "
+        source:
+          type: string
+          description: Market source.
+          example: binance
+        ohlc_available_from:
+          type: string
+          description: First date with OHLC data (YYYY-MM-DD).
+          example: "2023-01-25"
+        history_available_from:
+          type: string
+          description: First date with history data (YYYY-MM-DD).
+          example: "2016-12-17"
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
