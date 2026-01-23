@@ -1,0 +1,14 @@
+[Unit]
+Description=Crypto API Fetcher Service
+After=network.target
+
+[Service]
+Type=simple
+User=daniel
+WorkingDirectory=/home/daniel/crypto-api-fetcher
+ExecStart=/run/current-system/sw/bin/node dist/index.js
+Restart=always
+EnvironmentFile=/home/daniel/crypto-api-fetcher/.env
+
+[Install]
+WantedBy=multi-user.target

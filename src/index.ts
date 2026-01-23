@@ -24,8 +24,8 @@ const start = () => {
     cryptoListCache
   );
 
-  server.listen(env.port, () => {
-    console.log(`Listening on http://localhost:${env.port}`);
+  server.listen(env.port, '0.0.0.0', () => {
+    console.log(`Listening on http://0.0.0.0:${env.port}`);
   });
 };
 
