@@ -78,11 +78,46 @@ This project exposes a NixOS module for easy deployment.
    }
    ```
 
-   **Configuration:**
-   The `environmentFile` must contain the required environment variables:
-   ```bash
-   COINGECKO_API_KEY=your_api_key
-   COINGECKO_BASE_URL=https://api.coingecko.com/api/v3
-   PRICE_CACHE_TTL_MINUTES=15
-   CRYPTO_LIST_CACHE_TTL_MINUTES=1440
-   ```
+    **Configuration:**
+    The `environmentFile` must contain the required environment variables:
+    ```bash
+    COINGECKO_API_KEY=your_api_key
+    COINGECKO_BASE_URL=https://api.coingecko.com/api/v3
+    PRICE_CACHE_TTL_MINUTES=15
+    CRYPTO_LIST_CACHE_TTL_MINUTES=1440
+    ```
+
+### Deployment Commands
+
+After making changes to the code, use these commands to deploy updates to your NixOS system:
+
+**Update and deploy all flake inputs:**
+```bash
+cd /etc/nixos && sudo nix flake update && sudo nixos-rebuild switch --flake /etc/nixos#hetzner-x86_64
+```
+
+**Update only crypto-api-fetcher and deploy:**
+```bash
+cd /etc/nixos && sudo nix flake update --update-input crypto-api-fetcher && sudo nixos-rebuild switch --flake /etc/nixos#hetzner-x86_64
+```
+
+**Complete workflow after code changes:**
+```bash
+# 1. Commit your changes
+cd /home/daniel/crypto-api-fetcher
+git add .
+git commit -m "Description of changes"
+
+# 2. Update NixOS with the latest version
+cd /etc/nixos
+sudo nix flake update --update-input crypto-api-fetcher
+sudo nixos-rebuild switch --flake /etc/nixos#hetzner-x86_64
+
+# 3. Verify the service is running
+sudo systemctl status crypto-api-fetcher
+```
+
+**Check service logs:**
+```bash
+sudo journalctl -u crypto-api-fetcher -f
+```
