@@ -3,6 +3,7 @@ import * as TE from 'fp-ts/lib/TaskEither.js';
 import { pipe } from 'fp-ts/lib/function.js';
 import { CoinGeckoConfig, fetchAssetPrice, fetchCryptoList } from './coingecko.js';
 import { AssetId } from './domain/price.js';
+import { CoinGeckoCryptoListResponse } from './domain/coingecko.js';
 
 export type PriceCache = {
   getCachedAssetPrice: (
@@ -14,7 +15,7 @@ export type PriceCache = {
 export type CryptoListCache = {
   getCachedCryptoList: (
     config: CoinGeckoConfig
-  ) => TE.TaskEither<Error, unknown>;
+  ) => TE.TaskEither<Error, CoinGeckoCryptoListResponse>;
 };
 
 const createQueryClient = (ttlMs: number): QueryClient =>

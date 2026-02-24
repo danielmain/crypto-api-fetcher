@@ -112,12 +112,15 @@ components:
         - id: bitcoin
           symbol: btc
           name: Bitcoin
+          platforms: {}
         - id: ethereum
           symbol: eth
           name: Ethereum
+          platforms:
+            ethereum: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     CryptoAsset:
       type: object
-      additionalProperties: true
+      additionalProperties: false
       required:
         - id
         - symbol
@@ -135,6 +138,14 @@ components:
           type: string
           description: Asset name.
           example: Bitcoin
+        platforms:
+          type: object
+          additionalProperties:
+            type: string
+          description: Blockchain platforms and contract addresses.
+          example:
+            ethereum: "0x1234...abcd"
+            polygon-pos: "0x5678...efgh"
     ErrorResponse:
       type: object
       additionalProperties: false
