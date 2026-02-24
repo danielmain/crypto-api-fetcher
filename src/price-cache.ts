@@ -1,19 +1,19 @@
 import { QueryClient } from '@tanstack/query-core';
 import * as TE from 'fp-ts/lib/TaskEither.js';
 import { pipe } from 'fp-ts/lib/function.js';
-import { FreeCryptoConfig, fetchAssetPrice, fetchCryptoList } from './freecrypto.js';
-import { AssetSymbol } from './domain/price.js';
+import { CoinGeckoConfig, fetchAssetPrice, fetchCryptoList } from './coingecko.js';
+import { AssetId } from './domain/price.js';
 
 export type PriceCache = {
   getCachedAssetPrice: (
-    config: FreeCryptoConfig,
-    symbol: AssetSymbol
+    config: CoinGeckoConfig,
+    id: AssetId
   ) => TE.TaskEither<Error, number>;
 };
 
 export type CryptoListCache = {
   getCachedCryptoList: (
-    config: FreeCryptoConfig
+    config: CoinGeckoConfig
   ) => TE.TaskEither<Error, unknown>;
 };
 
@@ -32,14 +32,14 @@ export const createPriceCache = (ttlMs: number): PriceCache => {
   const queryClient = createQueryClient(ttlMs);
 
   return {
-    getCachedAssetPrice: (config, symbol) =>
+    getCachedAssetPrice: (config, id) =>
       TE.tryCatch(
         () =>
           queryClient.fetchQuery({
-            queryKey: ['asset-price', symbol.requestSymbol],
+            queryKey: ['asset-price', id.requestId],
             queryFn: () =>
               pipe(
-                fetchAssetPrice(config, symbol),
+                fetchAssetPrice(config, id),
                 TE.match(
                   (error) => {
                     throw error;

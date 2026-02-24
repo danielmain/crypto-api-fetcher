@@ -2,8 +2,8 @@ import * as E from 'fp-ts/lib/Either.js';
 import { pipe } from 'fp-ts/lib/function.js';
 
 export type Env = {
-  freeCryptoApiKey: string;
-  freeCryptoBaseUrl: string;
+  coingeckoApiKey: string;
+  coingeckoBaseUrl: string;
   priceCacheTtlMinutes: number;
   cryptoListCacheTtlMinutes: number;
   port: number;
@@ -37,10 +37,10 @@ const parseMinutes = (key: string, value: string): E.Either<Error, number> => {
 export const loadEnv = (): E.Either<Error, Env> =>
   pipe(
     E.Do,
-    E.bind('freeCryptoApiKey', () => readEnv('FREECRYPTO_API_KEY')),
-    E.bind('freeCryptoBaseUrl', () =>
+    E.bind('coingeckoApiKey', () => readEnv('COINGECKO_API_KEY')),
+    E.bind('coingeckoBaseUrl', () =>
       E.right(
-        process.env.FREECRYPTO_BASE_URL ?? 'https://api.freecryptoapi.com/v1'
+        process.env.COINGECKO_BASE_URL ?? 'https://api.coingecko.com/api/v3'
       )
     ),
     E.bind('priceCacheTtlMinutes', () =>

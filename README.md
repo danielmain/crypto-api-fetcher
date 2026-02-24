@@ -1,6 +1,6 @@
 # crypto-api-fetcher
 
-Minimal service that fetches the latest crypto prices from FreeCryptoAPI and serves them via cached REST endpoints.
+Minimal service that fetches the latest crypto prices from CoinGecko and serves them via cached REST endpoints.
 
 ## Setup
 
@@ -9,7 +9,7 @@ npm install
 cp .env.example .env
 ```
 
-Populate `.env` with your FreeCryptoAPI key and cache settings.
+Populate `.env` with your CoinGecko API key and cache settings.
 
 ## Run
 
@@ -19,10 +19,10 @@ npm run dev
 
 The server listens on `PORT` (default `3000`) and exposes:
 
-- `GET /api/price/BTC` -> latest BTC price (cached for `PRICE_CACHE_TTL_MINUTES`)
+- `GET /api/price/bitcoin` -> latest Bitcoin USD price (cached for `PRICE_CACHE_TTL_MINUTES`)
 - `GET /api/assets` -> crypto list (cached for `CRYPTO_LIST_CACHE_TTL_MINUTES`)
 
-Symbols must be uppercase alphanumeric (e.g., `BTC`, `ADA`).
+Asset IDs must be lowercase CoinGecko IDs (e.g., `bitcoin`, `ethereum`, `cardano`).
 
 ## API Documentation
 
@@ -81,8 +81,8 @@ This project exposes a NixOS module for easy deployment.
    **Configuration:**
    The `environmentFile` must contain the required environment variables:
    ```bash
-   FREECRYPTO_API_KEY=your_api_key
-   FREECRYPTO_BASE_URL=https://api.freecryptoapi.com/v1
+   COINGECKO_API_KEY=your_api_key
+   COINGECKO_BASE_URL=https://api.coingecko.com/api/v3
    PRICE_CACHE_TTL_MINUTES=15
    CRYPTO_LIST_CACHE_TTL_MINUTES=1440
    ```

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { loadEnv } from './env.js';
 import { createServer } from './server.js';
-import { toFreeCryptoConfig } from './freecrypto.js';
+import { toCoinGeckoConfig } from './coingecko.js';
 import * as E from 'fp-ts/lib/Either.js';
 import { createCryptoListCache, createPriceCache } from './price-cache.js';
 
@@ -19,7 +19,7 @@ const start = () => {
     env.cryptoListCacheTtlMinutes * 60 * 1000
   );
   const server = createServer(
-    toFreeCryptoConfig(env),
+    toCoinGeckoConfig(env),
     priceCache,
     cryptoListCache
   );

@@ -2,8 +2,8 @@ import http, { IncomingMessage, ServerResponse } from 'node:http';
 import * as E from 'fp-ts/lib/Either.js';
 import * as TE from 'fp-ts/lib/TaskEither.js';
 import { pipe } from 'fp-ts/lib/function.js';
-import { FreeCryptoConfig } from './freecrypto.js';
-import { AssetSymbol, parseAssetSymbol } from './domain/price.js';
+import { CoinGeckoConfig } from './coingecko.js';
+import { AssetId, parseAssetId } from './domain/price.js';
 import { CryptoListCache, PriceCache } from './price-cache.js';
 
 const notFound = (res: ServerResponse): void => {
@@ -26,12 +26,12 @@ const badRequest = (res: ServerResponse, message: string): void => {
 
 const handlePriceRoute = (
   res: ServerResponse,
-  config: FreeCryptoConfig,
+  config: CoinGeckoConfig,
   priceCache: PriceCache,
-  symbol: AssetSymbol
+  id: AssetId
 ): Promise<void> =>
   pipe(
-    priceCache.getCachedAssetPrice(config, symbol),
+    priceCache.getCachedAssetPrice(config, id),
     TE.match(
       (error) => {
         res.statusCode = 502;
@@ -41,16 +41,14 @@ const handlePriceRoute = (
       (price) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(
-          JSON.stringify({ symbol: symbol.requestSymbol, price })
-        );
+        res.end(JSON.stringify({ id: id.requestId, price }));
       }
     )
   )();
 
 const handleAssetsRoute = (
   res: ServerResponse,
-  config: FreeCryptoConfig,
+  config: CoinGeckoConfig,
   cryptoListCache: CryptoListCache
 ): Promise<void> =>
   pipe(
@@ -72,7 +70,7 @@ const handleAssetsRoute = (
 const route = (
   req: IncomingMessage,
   res: ServerResponse,
-  config: FreeCryptoConfig,
+  config: CoinGeckoConfig,
   priceCache: PriceCache,
   cryptoListCache: CryptoListCache
 ): Promise<void> => {
@@ -96,23 +94,23 @@ const route = (
     return Promise.resolve();
   }
 
-  const rawSymbol = decodeURIComponent(path.slice(prefix.length));
-  if (!rawSymbol || rawSymbol.includes('/')) {
-    badRequest(res, 'Symbol is required as an uppercase asset code');
+  const rawId = decodeURIComponent(path.slice(prefix.length));
+  if (!rawId || rawId.includes('/')) {
+    badRequest(res, 'Asset id is required (e.g., bitcoin)');
     return Promise.resolve();
   }
 
-  const parsedSymbol = parseAssetSymbol(rawSymbol);
-  if (E.isLeft(parsedSymbol)) {
-    badRequest(res, parsedSymbol.left.message);
+  const parsedId = parseAssetId(rawId);
+  if (E.isLeft(parsedId)) {
+    badRequest(res, parsedId.left.message);
     return Promise.resolve();
   }
 
-  return handlePriceRoute(res, config, priceCache, parsedSymbol.right);
+  return handlePriceRoute(res, config, priceCache, parsedId.right);
 };
 
 export const createServer = (
-  config: FreeCryptoConfig,
+  config: CoinGeckoConfig,
   priceCache: PriceCache,
   cryptoListCache: CryptoListCache
 ): http.Server =>

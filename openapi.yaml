@@ -3,7 +3,7 @@ info:
   title: Crypto API Fetcher
   version: 1.0.0
   description: |
-    Minimal service that fetches the latest crypto prices from FreeCryptoAPI and
+    Minimal service that fetches the latest crypto prices from CoinGecko and
     serves them via cached REST endpoints.
 servers:
   - url: http://localhost:3000
@@ -12,37 +12,37 @@ tags:
   - name: Prices
   - name: Assets
 paths:
-  /api/price/{symbol}:
+  /api/price/{id}:
     get:
       tags:
         - Prices
-      summary: Get latest price for a crypto asset
+      summary: Get latest USD price for a crypto asset
       description: |
-        Returns the latest USD price for a single asset symbol. Responses are
-        cached based on server configuration.
+        Returns the latest USD price for a single CoinGecko asset id.
+        Responses are cached based on server configuration.
       parameters:
-        - name: symbol
+        - name: id
           in: path
           required: true
-          description: Uppercase alphanumeric asset symbol (e.g., BTC, ETH, ADA).
+          description: Lowercase CoinGecko asset id (e.g., bitcoin, ethereum, cardano).
           schema:
             type: string
-            pattern: "^[A-Z0-9]{1,10}$"
+            pattern: "^[a-z0-9-]{1,64}$"
       responses:
         "200":
-          description: Latest price for the requested symbol.
+          description: Latest price for the requested asset id.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PriceResponse"
               examples:
-                btc:
-                  summary: BTC price
+                bitcoin:
+                  summary: Bitcoin price
                   value:
-                    symbol: BTC
+                    id: bitcoin
                     price: 43000.12
         "400":
-          description: Invalid or missing symbol.
+          description: Invalid or missing asset id.
           content:
             application/json:
               schema:
@@ -54,7 +54,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: Upstream FreeCryptoAPI error or unparseable payload.
+          description: Upstream CoinGecko error or unparseable payload.
           content:
             application/json:
               schema:
@@ -63,13 +63,13 @@ paths:
     get:
       tags:
         - Assets
-      summary: Get crypto asset list
+      summary: Get CoinGecko assets list
       description: |
-        Returns the upstream FreeCryptoAPI crypto list payload as-is. Responses
-        are cached based on server configuration.
+        Returns the upstream CoinGecko `/coins/list` payload as-is.
+        Responses are cached based on server configuration.
       responses:
         "200":
-          description: Upstream crypto list payload.
+          description: Upstream assets list payload.
           content:
             application/json:
               schema:
@@ -81,7 +81,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: Upstream FreeCryptoAPI error.
+          description: Upstream CoinGecko error.
           content:
             application/json:
               schema:
@@ -92,114 +92,49 @@ components:
       type: object
       additionalProperties: false
       required:
-        - symbol
+        - id
         - price
       properties:
-        symbol:
+        id:
           type: string
-          description: Asset symbol requested.
-          example: BTC
+          description: CoinGecko id requested.
+          example: bitcoin
         price:
           type: number
           description: Latest USD price.
           example: 43000.12
     CryptoListResponse:
-      type: object
-      description: FreeCryptoAPI crypto list payload.
-      additionalProperties: false
-      required:
-        - status
-        - resultset_size
-        - result
-      properties:
-        status:
-          type: boolean
-          description: Indicates whether the request succeeded.
-          example: true
-        resultset_size:
-          type: integer
-          description: Total number of assets returned.
-          example: 4483
-        result:
-          type: array
-          description: List of assets.
-          items:
-            $ref: "#/components/schemas/CryptoAsset"
+      type: array
+      description: CoinGecko `/coins/list` payload.
+      items:
+        $ref: "#/components/schemas/CryptoAsset"
       example:
-        status: true
-        resultset_size: 4483
-        result:
-          - id: "1"
-            symbol: "BTC"
-            name: "Bitcoin "
-            source: "binance"
-            ohlc_available_from: "2023-01-25"
-            history_available_from: "2016-12-17"
-          - id: "2"
-            symbol: "ETH"
-            name: "Ethereum "
-            source: "binance"
-            ohlc_available_from: "2023-01-25"
-            history_available_from: "2016-12-18"
-          - id: "3"
-            symbol: "LTC"
-            name: "Litecoin "
-            source: "binance"
-            ohlc_available_from: "2023-01-25"
-            history_available_from: "2016-12-18"
-          - id: "4"
-            symbol: "BNB"
-            name: "Binance Coin "
-            source: "binance"
-            ohlc_available_from: "2023-01-25"
-            history_available_from: "2016-12-17"
-          - id: "5"
-            symbol: "NEO"
-            name: "NEO "
-            source: "binance"
-            ohlc_available_from: "2023-01-25"
-            history_available_from: "2016-12-18"
-          - id: "7"
-            symbol: "GAS"
-            name: "Gas "
-            source: "binance"
-            ohlc_available_from: "2023-03-17"
-            history_available_from: "2016-12-17"
+        - id: bitcoin
+          symbol: btc
+          name: Bitcoin
+        - id: ethereum
+          symbol: eth
+          name: Ethereum
     CryptoAsset:
       type: object
-      additionalProperties: false
+      additionalProperties: true
       required:
         - id
         - symbol
         - name
-        - source
-        - ohlc_available_from
-        - history_available_from
       properties:
         id:
           type: string
-          description: Asset identifier from FreeCryptoAPI.
-          example: "1"
+          description: CoinGecko asset id.
+          example: bitcoin
         symbol:
           type: string
-          description: Asset symbol.
-          example: BTC
+          description: Asset ticker symbol.
+          example: btc
         name:
           type: string
           description: Asset name.
-          example: "Bitcoin "
-        source:
-          type: string
-          description: Market source.
-          example: binance
-        ohlc_available_from:
-          type: string
-          description: First date with OHLC data (YYYY-MM-DD).
-          example: "2023-01-25"
-        history_available_from:
-          type: string
-          description: First date with history data (YYYY-MM-DD).
-          example: "2016-12-17"
+          example: Bitcoin
     ErrorResponse:
       type: object
       additionalProperties: false

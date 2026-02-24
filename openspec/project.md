@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-Provide a backend service that fetches crypto prices from FreeCryptoAPI, caches results, and serves them to a separate application via a single shared API key to avoid per-user credentials.
+Provide a backend service that fetches crypto prices from CoinGecko, caches results, and serves them to a separate application via a single shared API key to avoid per-user credentials.
 
 ## Tech Stack
 - Runtime: Node.js or Bun (pending final choice; see conventions below)
@@ -21,11 +21,11 @@ Provide a backend service that fetches crypto prices from FreeCryptoAPI, caches 
 ### Architecture Patterns
 - Single service that fetches prices on a 15-minute interval and caches results
 - Serve cached prices to downstream app without per-user API keys
-- Isolate infrastructure (HTTP server, FreeCryptoAPI client, timers) from pure domain logic
+- Isolate infrastructure (HTTP server, CoinGecko client, timers) from pure domain logic
 
 ### Testing Strategy
 - Unit tests with Vitest for pure functions
-- Integration tests for FreeCryptoAPI client and cache behavior
+- Integration tests for CoinGecko client and cache behavior
 - Require green test suite before merge
 
 ### Git Workflow
@@ -48,4 +48,4 @@ Provide a backend service that fetches crypto prices from FreeCryptoAPI, caches 
 - Strict functional programming principles using `fp-ts`
 
 ## External Dependencies
-- FreeCryptoAPI for crypto price data
+- CoinGecko for crypto price data

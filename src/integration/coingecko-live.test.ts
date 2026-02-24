@@ -2,15 +2,15 @@ import 'dotenv/config';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as E from 'fp-ts/lib/Either.js';
 import { loadEnv } from '../env.js';
-import { fetchAssetPrice, toFreeCryptoConfig } from '../freecrypto.js';
-import { parseAssetSymbol } from '../domain/price.js';
+import { fetchAssetPrice, toCoinGeckoConfig } from '../coingecko.js';
+import { parseAssetId } from '../domain/price.js';
 import { createServer } from '../server.js';
 import { createCryptoListCache, createPriceCache } from '../price-cache.js';
 
 const ASSETS = [
-  { symbol: 'ETH', minPrice: 0.01 },
-  { symbol: 'ADA', minPrice: 0.0001 },
-  { symbol: 'BTC', minPrice: 0.01 }
+  { id: 'ethereum', minPrice: 0.01 },
+  { id: 'cardano', minPrice: 0.0001 },
+  { id: 'bitcoin', minPrice: 0.01 }
 ];
 
 const requireEnv = () => {
@@ -21,24 +21,22 @@ const requireEnv = () => {
   return env.right;
 };
 
-describe('live FreeCryptoAPI integration', () => {
+describe('live CoinGecko integration', () => {
   for (const asset of ASSETS) {
     it(
-      `fetches ${asset.symbol} price directly from FreeCryptoAPI and enforces minimum threshold`,
+      `fetches ${asset.id} price directly from CoinGecko and enforces minimum threshold`,
       async () => {
         const env = requireEnv();
-        const parsedSymbol = parseAssetSymbol(asset.symbol);
-        if (E.isLeft(parsedSymbol)) {
-          throw new Error(parsedSymbol.left.message);
+        const parsedId = parseAssetId(asset.id);
+        if (E.isLeft(parsedId)) {
+          throw new Error(parsedId.left.message);
         }
         const priceResult = await fetchAssetPrice(
-          toFreeCryptoConfig(env),
-          parsedSymbol.right
+          toCoinGeckoConfig(env),
+          parsedId.right
         )();
         if (E.isLeft(priceResult)) {
-          throw new Error(
-            `FreeCryptoAPI fetch failed: ${priceResult.left.message}`
-          );
+          throw new Error(`CoinGecko fetch failed: ${priceResult.left.message}`);
         }
         expect(priceResult.right).toBeGreaterThanOrEqual(asset.minPrice);
       },
@@ -56,11 +54,7 @@ describe('live FreeCryptoAPI integration', () => {
       const cryptoListCache = createCryptoListCache(
         env.cryptoListCacheTtlMinutes * 60 * 1000
       );
-      server = createServer(
-        toFreeCryptoConfig(env),
-        priceCache,
-        cryptoListCache
-      );
+      server = createServer(toCoinGeckoConfig(env), priceCache, cryptoListCache);
 
       await new Promise<void>((resolve) => {
         server?.listen(0, '127.0.0.1', () => {
@@ -83,26 +77,24 @@ describe('live FreeCryptoAPI integration', () => {
 
     for (const asset of ASSETS) {
       it(
-        `serves ${asset.symbol} price from /api/price/:symbol and enforces minimum threshold`,
+        `serves ${asset.id} price from /api/price/:id and enforces minimum threshold`,
         async () => {
-          const response = await fetch(
-            `${baseUrl}/api/price/${asset.symbol}`
-          );
+          const response = await fetch(`${baseUrl}/api/price/${asset.id}`);
           if (!response.ok) {
             const body = await response.text();
             throw new Error(`HTTP ${response.status}: ${body}`);
           }
           const payload = (await response.json()) as {
+            id?: string;
             price?: number;
             error?: string;
           };
           if (payload.error) {
             throw new Error(`API error: ${payload.error}`);
           }
+          expect(payload.id).toBe(asset.id);
           expect(payload.price).toBeDefined();
-          expect(payload.price as number).toBeGreaterThanOrEqual(
-            asset.minPrice
-          );
+          expect(payload.price as number).toBeGreaterThanOrEqual(asset.minPrice);
         },
         20000
       );
@@ -116,8 +108,9 @@ describe('live FreeCryptoAPI integration', () => {
           const body = await response.text();
           throw new Error(`HTTP ${response.status}: ${body}`);
         }
-        const payload = (await response.json()) as Record<string, unknown>;
-        expect(Object.keys(payload).length).toBeGreaterThan(0);
+        const payload = (await response.json()) as unknown[];
+        expect(Array.isArray(payload)).toBe(true);
+        expect(payload.length).toBeGreaterThan(0);
       },
       20000
     );
